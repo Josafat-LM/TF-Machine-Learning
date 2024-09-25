@@ -1,0 +1,47 @@
+import pandas as pd
+import requests
+import time
+
+csv_file = 'criptomonedas_filtradas.csv'
+df = pd.read_csv(csv_file)
+
+# Clave de API
+API_KEY = 'd4970e9f-a541-4fd0-8dbf-926c730fec28'
+
+#API de CoinMarketCap
+url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info'
+
+#API Key
+headers = {
+    'Accepts': 'application/json',
+    'X-CMC_PRO_API_KEY': API_KEY,
+}
+
+def obtener_blockchain(symbol):
+    parameters = {
+        'symbol': symbol
+    }
+    try:
+        response = requests.get(url, headers=headers, params=parameters)
+        data = response.json()
+
+        # Extraer la información de blockchain
+        if 'data' in data and symbol in data['data']:
+            blockchain_platform = data['data'][symbol]['platform']
+            if blockchain_platform:
+                return blockchain_platform['name']
+            else:
+                return 'No asociado a ningún blockchain'
+        else:
+            return 'Informacion no disponible'
+    except Exception as e:
+        return f'Error: {e}'
+
+def obtener_blockchain_R(symbol):
+    resultado = obtener_blockchain(symbol)
+    time.sleep(1)
+    return resultado
+df['blockchain'] = df['symbol'].apply(lambda x: obtener_blockchain_R(x))
+
+# Guardar
+df.to_csv('criptomonedas_con_blockchain_actualizado.csv', index=False)
